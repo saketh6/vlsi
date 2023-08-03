@@ -1,0 +1,68 @@
+module FIFO(clk1,clk2,rst,din,dout,empty,full,wr_en,rd_en,counter
+
+    );
+    input clk1,clk2,rst,wr_en,rd_en;
+    input [7:0] din;
+    output reg [7:0] dout;
+    output reg empty=0,full=0;
+    reg [7:0] mem [63:0];
+    output reg [6:0]counter;
+    reg [3:0] rd_ptr,wr_ptr;
+    
+    always@(counter) begin
+    empty=(counter==0);
+    full=(counter==64);
+    end
+    
+    always@(posedge clk1 or posedge rst) begin
+    if(rst)
+    counter<=0;
+    else if((wr_en && !full) && (rd_en && !empty))
+    counter<=counter;
+    else if(!full && wr_en)
+    counter<=counter+1;
+    else if(!empty && rd_en)
+    counter<=counter-1;          
+    else 
+    counter<=counter;    
+    end
+    
+    always@(posedge clk2 or posedge rst) begin
+    if(rst)
+    dout<=0;
+    else if(!full && rd_en)
+    dout<=mem[rd_ptr];
+    else
+    dout<=dout;
+    end
+    always@(posedge clk1 or posedge rst) begin
+    if(rst) 
+    mem[wr_ptr]<=0;
+    else if(!full && wr_en)
+    mem[wr_ptr]<=din;
+    else
+    mem[wr_ptr]<=mem[wr_ptr];
+    end
+    
+    always@(posedge clk1 or posedge rst) begin
+    if(rst)
+    wr_ptr<=0;
+    else begin
+    if(!full && wr_en)
+    wr_ptr<=wr_ptr+1;
+    else
+     wr_ptr<=wr_ptr;
+     end
+     end
+     
+      always@(posedge clk2 or posedge rst) begin
+        if(rst)
+        rd_ptr<=0;
+        else begin
+        if(!empty && rd_en)
+        rd_ptr<=rd_ptr+1;
+        else
+         rd_ptr<=rd_ptr;
+         end
+         end
+endmodule
